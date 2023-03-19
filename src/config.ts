@@ -89,4 +89,8 @@ export default class ConfigManager {
     setDebug(debug: boolean) {
         this.debug = debug;
     }
+
+    getAllKeys() {
+        return Object.keys(this._config);
+    }
 }

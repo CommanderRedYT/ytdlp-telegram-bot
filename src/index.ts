@@ -191,3 +191,11 @@ bot.on('message', async (msg) => {
 
     await handleYouTubeDownload(bot, link, chatId, msg.message_id);
 });
+
+// send bot is online to all chats on startup
+for (const key in config.getAllKeys()) {
+    const user = config.get(key);
+    if (user) {
+        bot.sendMessage(user.chatId, 'Bot is online!');
+    }
+}
