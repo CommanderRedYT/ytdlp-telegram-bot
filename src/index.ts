@@ -44,6 +44,8 @@ const sendResponseAndDelete = async (telegram_bot: TelegramBot, chatId: number, 
 const handleYouTubeDownload = async (bot: TelegramBot, downloadUrl: string, chatId: number, messageId: number) => {
     const { DATA_DIRECTORY, CHMOD } = process.env;
 
+    let stdout = '';
+
     // yt-dlp --merge-output-format mkv --write-info-json --embed-thumbnail --add-metadata <url>
     const ytDlpCommand = `yt-dlp --merge-output-format mkv --write-info-json --embed-thumbnail --add-metadata ${downloadUrl}`;
     console.log(`Executing command: ${ytDlpCommand}`);
@@ -53,23 +55,26 @@ const handleYouTubeDownload = async (bot: TelegramBot, downloadUrl: string, chat
 
     child_process.stdout.on('data', (data) => {
         console.log(data);
+        stdout += data;
     });
 
     child_process.stderr.on('data', (data) => {
         console.error(data);
+        stdout += data;
     });
 
     child_process.on('close', async (code) => {
         console.log(`Process exited with code ${code}`);
         if (code === 0) {
-            await sendResponseAndDelete(bot, chatId, messageId, 'Download completed!');
+            await sendResponseAndDelete(bot, chatId, messageId, `Download of ${downloadUrl} finished!`);
 
             // change file permissions
             const chmodCommand = `chmod -R ${CHMOD} ${DATA_DIRECTORY}`;
             console.log(`Executing command: ${chmodCommand}`);
             await exec(chmodCommand);
         } else {
-            await sendResponseAndDelete(bot, chatId, messageId, 'Download failed!');
+            await sendResponseAndDelete(bot, chatId, messageId, `Download of ${downloadUrl} failed! (code: ${code})`);
+            await sendResponseAndDelete(bot, chatId, messageId, stdout, 10000);
         }
     });
 
