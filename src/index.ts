@@ -46,8 +46,7 @@ const handleYouTubeDownload = async (bot: TelegramBot, downloadUrl: string, chat
 
     let stdout = '';
 
-    // yt-dlp --merge-output-format mkv --write-info-json --embed-thumbnail --add-metadata <url>
-    const ytDlpCommand = `yt-dlp --merge-output-format mkv --write-info-json --embed-thumbnail --add-metadata ${downloadUrl}`;
+    const ytDlpCommand = `yt-dlp --merge-output-format mkv --write-info-json --add-metadata --write-thumbnail -o "thumbnail:%(title)s [%(id)s]-poster.%(ext)s" ${downloadUrl}`;
     console.log(`Executing command: ${ytDlpCommand}`);
 
     // execute command in DATA_DIRECTORY
