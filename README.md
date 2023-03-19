@@ -1,6 +1,7 @@
 # ytdlp-telegram-bot
 
 This is a telegram bot that uses [yt-dlp](https://github.com/yt-dlp/yt-dlp) to download videos from youtube.
+My personal use-case is combining this with Jellyfin. 
 
 ## Usage
 ```bash
