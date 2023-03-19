@@ -199,3 +199,5 @@ for (const key in config.getAllKeys()) {
         bot.sendMessage(user.chatId, 'Bot is online!');
     }
 }
+
+console.log('Bot is online!');
