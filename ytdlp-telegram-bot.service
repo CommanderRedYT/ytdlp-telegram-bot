@@ -1,0 +1,14 @@
+[Unit]
+Description=Telegram Bot for yt-dlp
+After=network-online.target
+
+[Service]
+Type=simple
+User=<user>
+WorkingDirectory=/path/to/telegram-yt-dlp
+ExecStart=/usr/bin/yarn start
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -17,6 +17,17 @@ cp .env.default .env
 yarn start
 ```
 
+## Systemd service
+The service file is located at 'ytdlp-telegram-bot.service'. Replace <user> with the user that should run the service and `/path/to/telegram-yt-dlp` with the path to the cloned repository.
+
+Then, to install the service, run:
+```bash
+sudo cp ytdlp-telegram-bot.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable ytdlp-telegram-bot
+sudo systemctl start ytdlp-telegram-bot
+```
+
 ## Configuration
 ```bash
 # .env
