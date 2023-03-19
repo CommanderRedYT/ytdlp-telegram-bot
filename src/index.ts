@@ -67,6 +67,11 @@ const handleYouTubeDownload = async (bot: TelegramBot, downloadUrl: string, chat
         if (code === 0) {
             await sendResponseAndDelete(bot, chatId, messageId, `Download of ${downloadUrl} finished!`);
 
+            // convert poster from webp to jpg
+            const convertPosterCommand = `for f in ${DATA_DIRECTORY}/*.webp; do convert "$f" "$\{f%.webp}.jpg"; done`;
+            console.log(`Executing command: ${convertPosterCommand}`);
+            await exec(convertPosterCommand);
+
             // change file permissions
             const chmodCommand = `chmod -R ${CHMOD} ${DATA_DIRECTORY}`;
             console.log(`Executing command: ${chmodCommand}`);
