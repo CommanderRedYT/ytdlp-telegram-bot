@@ -32,7 +32,7 @@ const config = new ConfigManager();
 
 const ytDlp = new YTDlpWrap();
 
-const bot = new TelegramBot(token, {polling: true});
+const bot = new TelegramBot(token, { polling: true });
 
 const sendResponseAndDelete = async (telegram_bot: TelegramBot, chatId: number, messageId: number, text: string, timeout = 5000) => {
     const response = await telegram_bot.sendMessage(chatId, text);
@@ -58,7 +58,7 @@ const handleYouTubeDownload = async (bot: TelegramBot, downloadUrl: string, chat
         '--add-metadata',
         '--write-thumbnail',
         '-o',
-        '"thumbnail:%(title)s [%(id)s]-poster.%(ext)s"',
+        'thumbnail:%(title)s [%(id)s]-poster.%(ext)s',
         downloadUrl,
     ], {
         cwd: DATA_DIRECTORY,
@@ -78,7 +78,7 @@ const handleYouTubeDownload = async (bot: TelegramBot, downloadUrl: string, chat
 
         currentMessageContent = newMessage;
 
-        console.log(`Updating message: Progress: ${progress.percent}%`);
+        console.log(`Updating message: Progress: ${progress.percent}% (${downloadUrl})`);
 
         bot.editMessageText(currentMessageContent, {
             chat_id: chatId,
@@ -114,6 +114,8 @@ const handleYouTubeDownload = async (bot: TelegramBot, downloadUrl: string, chat
             const chmodCommand = `chmod -R ${CHMOD} ${DATA_DIRECTORY}`;
             console.log(`Executing command: ${chmodCommand}`);
             await exec(chmodCommand);
+
+            console.log(`Saving of ${downloadUrl} finished!`);
         } else {
             await sendResponseAndDelete(bot, chatId, messageId, `Download of ${downloadUrl} failed! (code: ${code})`);
         }
@@ -238,13 +240,5 @@ bot.on('message', async (msg) => {
 
     await handleYouTubeDownload(bot, link, chatId, msg.message_id);
 });
-
-// send bot is online to all chats on startup
-for (const key in config.getAllKeys()) {
-    const user = config.get(key);
-    if (user) {
-        bot.sendMessage(user.chatId, 'Bot is online!');
-    }
-}
 
 console.log('Bot is online!');
