@@ -29,7 +29,7 @@
     ],
     "max-len": [
       "warn",
-      120
+      200
     ],
     "comma-dangle": [
       "error",

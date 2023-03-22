@@ -3,6 +3,7 @@ import * as TelegramBot from 'node-telegram-bot-api';
 import ConfigManager from './config';
 import * as jwt from 'jsonwebtoken';
 import { exec } from 'child_process';
+import YTDlpWrap from 'yt-dlp-wrap';
 
 dotenv.config();
 
@@ -29,6 +30,8 @@ const secret = process.env.JWT_SECRET;
 
 const config = new ConfigManager();
 
+const ytDlp = new YTDlpWrap();
+
 const bot = new TelegramBot(token, {polling: true});
 
 const sendResponseAndDelete = async (telegram_bot: TelegramBot, chatId: number, messageId: number, text: string, timeout = 5000) => {
@@ -37,32 +40,67 @@ const sendResponseAndDelete = async (telegram_bot: TelegramBot, chatId: number, 
         try {
             telegram_bot.deleteMessage(chatId, messageId);
             telegram_bot.deleteMessage(chatId, response.message_id);
-        } catch {}
+        } catch { /* empty */ }
     }, timeout);
 };
 
 const handleYouTubeDownload = async (bot: TelegramBot, downloadUrl: string, chatId: number, messageId: number) => {
     const { DATA_DIRECTORY, CHMOD } = process.env;
 
-    let stdout = '';
+    const statusMessage = await bot.sendMessage(chatId, `Processing ${downloadUrl}...`);
+    let currentMessageContent = '';
+    let lastStatusMessageUpdate = Date.now();
 
-    const ytDlpCommand = `yt-dlp --merge-output-format mkv --write-info-json --add-metadata --write-thumbnail -o "thumbnail:%(title)s [%(id)s]-poster.%(ext)s" ${downloadUrl}`;
-    console.log(`Executing command: ${ytDlpCommand}`);
-
-    // execute command in DATA_DIRECTORY
-    const child_process = exec(ytDlpCommand, { cwd: DATA_DIRECTORY });
-
-    child_process.stdout.on('data', (data) => {
-        console.log(data);
-        stdout += data;
+    const ytDlpResult = ytDlp.exec([
+        '--merge-output-format',
+        'mkv',
+        '--write-info-json',
+        '--add-metadata',
+        '--write-thumbnail',
+        '-o',
+        '"thumbnail:%(title)s [%(id)s]-poster.%(ext)s"',
+        downloadUrl,
+    ], {
+        cwd: DATA_DIRECTORY,
     });
 
-    child_process.stderr.on('data', (data) => {
-        console.error(data);
-        stdout += data;
+    ytDlpResult.on('progress', (progress) => {
+        // send progress to user
+        if (Date.now() - lastStatusMessageUpdate < 300) {
+            return;
+        }
+
+        const newMessage = `Download of ${downloadUrl} started! ${progress.percent}%`;
+
+        if (newMessage === currentMessageContent) {
+            return;
+        }
+
+        currentMessageContent = newMessage;
+
+        console.log(`Updating message: Progress: ${progress.percent}%`);
+
+        bot.editMessageText(currentMessageContent, {
+            chat_id: chatId,
+            message_id: statusMessage.message_id,
+        });
+
+        lastStatusMessageUpdate = Date.now();
     });
 
-    child_process.on('close', async (code) => {
+    ytDlpResult.on('error', async (err) => {
+        console.error(err);
+        await sendResponseAndDelete(bot, chatId, messageId, 'Download failed!');
+
+        // delete status message
+        setTimeout(() => {
+            try {
+                bot.deleteMessage(chatId, statusMessage.message_id);
+            } catch { /* empty */ }
+        }, 5000);
+    });
+
+    ytDlpResult.on('close', async (code) => {
         console.log(`Process exited with code ${code}`);
         if (code === 0) {
             await sendResponseAndDelete(bot, chatId, messageId, `Download of ${downloadUrl} finished!`);
@@ -78,16 +116,16 @@ const handleYouTubeDownload = async (bot: TelegramBot, downloadUrl: string, chat
             await exec(chmodCommand);
         } else {
             await sendResponseAndDelete(bot, chatId, messageId, `Download of ${downloadUrl} failed! (code: ${code})`);
-            await sendResponseAndDelete(bot, chatId, messageId, stdout, 10000);
         }
-    });
 
-    child_process.on('error', async (err) => {
-        console.error(err);
-        await sendResponseAndDelete(bot, chatId, messageId, 'Download failed!');
+        // delete status message
+        setTimeout(() => {
+            try {
+                bot.deleteMessage(chatId, statusMessage.message_id);
+            } catch { /* empty */
+            }
+        }, 5000);
     });
-
-    await sendResponseAndDelete(bot, chatId, messageId, `Download of ${downloadUrl} started!`);
 };
 
 bot.onText(/\/start/, async (msg) => {
