@@ -25,6 +25,10 @@ const ytDlpRegexList = [
     /https?:\/\/youtu\.be\/([a-zA-Z0-9_-]{11})/,
     // youtube shorts
     /https?:\/\/(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    // reddit
+    /https?:\/\/(?:www\.)?reddit\.com\/r\/[a-zA-Z0-9_-]+\/comments\/[a-zA-Z0-9_-]+\/([a-zA-Z0-9_-]{7})/,
+    // twitter
+    /https?:\/\/(?:www\.)?twitter\.com\/[a-zA-Z0-9_-]+\/status\/([a-zA-Z0-9_-]{19})/,
 ];
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
